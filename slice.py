@@ -243,17 +243,20 @@ def interactive_driver(**authargs):
   db = MySQLdb.connect(host=authargs["db_host"], user="python", passwd=authargs["db_pass"], db=authargs["db_name"])
   db.autocommit(True)
 
-  qry_dict = {1:info_queries.get_datadir, 2:info_queries.get_table_names,
-                3:info_queries.get_table_description, 4:info_queries.get_sample_rows}
+
+  qry_dict = {1:info_queries.get_db_names, 2:info_queries.enter_db, 3:info_queries.get_table_names,
+              4:info_queries.get_table_description, 5:info_queries.get_sample_rows, 6:info_queries.get_datadir
+              }
 
   with closing( db.cursor() ) as cursor:
     cursor.connection.autocommit(True)
 
-    while not (cmd == 5):
+    while not (cmd == 7):
       print "\nWhat would you like to do?:\n"
-      print "{0:50}".format("1. Show data directory (Locate output).") + "2. Show table names."
-      print "{0:50}".format("3. Get table description (column names/types).") + "4. Get 2 sample rows from table."
-      print "{0:50}".format("5. Quit application/Exit\n")
+      print "{0:50}".format("1. Show database names.") + "2. Enter database."
+      print "{0:50}".format("3. Show table names.") + "4. Get table description (column names/types)."
+      print "{0:50}".format("5. Get 2 sample rows from table.") + "6. Show data directory (Locate output)"
+      print "{0:50}".format("7. Quit application/Exit\n")
 
       try:
         cmd = sys.stdin.readline().strip()
@@ -263,7 +266,7 @@ def interactive_driver(**authargs):
 
       if not isinstance(cmd, int):
         sys.stderr.write("Invalid non-numerical command '{0}' ! Try again. \n".format(cmd))
-      elif (cmd == 5):
+      elif (cmd == 7):
         print "Exiting application ..."
         sys.exit(1)
       elif (cmd not in qry_dict.keys()):

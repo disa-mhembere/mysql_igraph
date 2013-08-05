@@ -15,7 +15,7 @@ from exceptions import RuntimeError
 from utils import ingest_util
 from utils import gen_util
 
-def data_to_db(sv_file_fn, separator, db_name, tb_name, headers, coltypes, force, passwd, ignore_cols=None):
+def data_to_db(sv_file_fn, separator, headers, coltypes, force, tb_name, ignore_cols=None, **authargs):
   """
   * Specifically for bitcoin data at this point
   Convert a tsv file to a csc matrix
@@ -80,8 +80,8 @@ def data_to_db(sv_file_fn, separator, db_name, tb_name, headers, coltypes, force
   qry_create_table += ");"
 
   # connect
-  print "Connecting to database %s ..." % db_name
-  db = MySQLdb.connect(host="localhost", user="python", passwd=passwd, db=db_name)
+  print "Connecting to database %s ..." % authargs["db_name"]
+  db = MySQLdb.connect(host=authargs["db_host"], user="python", passwd=authargs["db_pass"], db=authargs["db_name"])
   db.autocommit(True)
 
   with closing( db.cursor() ) as cursor:
@@ -95,7 +95,7 @@ def data_to_db(sv_file_fn, separator, db_name, tb_name, headers, coltypes, force
     tb_name_counter = 1
     while True:
       try:
-        cursor.execute( qry_create_table % (tb_name))
+        cursor.execute(qry_create_table % (tb_name))
         print "Table %s created ..." % tb_name
         break # Only gets here on a successful table create
       except Exception, msg:
@@ -115,7 +115,7 @@ def data_to_db(sv_file_fn, separator, db_name, tb_name, headers, coltypes, force
     tb_dir = cursor.fetchone()[1]
 
     # may fail with incorrect level of permissions for python
-    call(["myisamchk", "--keys-used=0", "-rq", "%s/%s" % (os.path.join(tb_dir,db_name), tb_name) ])
+    call(["myisamchk", "--keys-used=0", "-rq", "%s/%s" % (os.path.join(tb_dir,authargs["db_name"]), tb_name) ])
 
     insert_stmt = ("""
         LOAD DATA LOCAL INFILE '%s'
@@ -135,7 +135,7 @@ def data_to_db(sv_file_fn, separator, db_name, tb_name, headers, coltypes, force
     cursor.execute(insert_stmt)
 
     # may fail with incorrect level of permissions for python
-    call(["myisamchk","-rq", "%s/%s" % (os.path.join(tb_dir,db_name), tb_name)]) # Python needs permissions for this
+    call(["myisamchk","-rq", "%s/%s" % (os.path.join(tb_dir, authargs["db_name"]), tb_name)]) # Python needs permissions for this
 
     try:
       cursor.execute("FLUSH TABLES;")
@@ -147,7 +147,7 @@ def data_to_db(sv_file_fn, separator, db_name, tb_name, headers, coltypes, force
   print "Final table name: '{0}'.".format(tb_name)
 
   db.close() # close db connection
-  return db_name, tb_name
+  return authargs["db_name"], tb_name
 
 
 def main():
@@ -155,10 +155,11 @@ def main():
   parser.add_argument("sv_file_fn", action="store", help="The full file name of the sv file")
   parser.add_argument("separator", action="store", help="The kind of separator between columns in the data file. Each line must end with a newline/carriage return\
                       Surrounded by quotes e.g '\t' for tab. ' ' for space. ',' for 'comma'. The following and more are valid: '@', '#', '~' etc.. '\\n' IS NOT!")
-  parser.add_argument("--database", "-d", action="store", default="Pydb", help="The name of the database where table with the graph will be held")
+  parser.add_argument("--db_name", "-d", action="store", default="Pydb", help="The name of the database where table with the graph will be held")
   parser.add_argument("--tb_name", "-t", action="store", help="The name you want the table to have in the db")
-  parser.add_argument("--headers", "-H", action="store", default="auto", nargs="+", help="If file does not have headers (column titles/labels) in the first line of the *sv file\
+  parser.add_argument("--headers", "-e", action="store", default="auto", nargs="+", help="If file does not have headers (column titles/labels) in the first line of the *sv file\
                       -- use this flag  to specify in e.g -H source destination time attr1 'attr w space' att3. If input file does have headers & you want to use them DO NOT use this flag")
+  parser.add_argument("--db_host", "-H", action="store", default="localhost", help="The database hostname/network address. Default is localhost.")
   parser.add_argument("--coltypes", "-ct", action="store", nargs="+", help="If not used -- types are assigned automatically based on auto detection of type using the 2nd line of data.\
                       MySQL types of the each column enclosed 'in quotes'. As many as there are columns in the data.\
                       see http://dev.mysql.com/doc/refman/5.0/en/data-type-overview.html for acceptable types. E.g 'integer not null'. 'double', 'FLOAT', varchar(64) etc..")
@@ -175,6 +176,8 @@ def main():
     #result.db_pass = "python"
     result.db_pass = getpass("Please enter the 'python' user password for MySQL:") # TODO: UNCOMMENT
 
-  db_name, tb_name = data_to_db(result.sv_file_fn, result.separator, result.database, result.tb_name, result.headers, result.coltypes, result.force, result.db_pass, result.ignore_cols)
+  authargs = {"db_host": result.db_host, "db_pass": result.db_pass, "db_name": result.db_name}
+
+  data_to_db(result.sv_file_fn, result.separator, result.headers, result.coltypes, result.force, result.tb_name, result.ignore_cols, **authargs)
 if __name__ == "__main__":
   main()

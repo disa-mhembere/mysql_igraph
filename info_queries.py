@@ -12,6 +12,13 @@ from utils.gen_util import sql_escape_string
 
 # All kwargs are db auth info i.e db_name, db_host, db_pass, db_user
 
+def get_db_names(**kwargs):
+  return "show databases;"
+
+def enter_db(**kwargs):
+  print "Enter the name of the database you want to enter:"
+  return "use %s;" % (sql_escape_string(sys.stdin.readline()))
+
 def get_table_description(**kwargs):
   print "Enter table name:"
   tb_name = sql_escape_string(sys.stdin.readline())
