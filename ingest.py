@@ -81,10 +81,10 @@ def data_to_db(sv_file_fn, separator, headers, coltypes, force, tb_name, ignore_
 
   # connect
   print "Connecting to database %s ..." % authargs["db_name"]
-  db = MySQLdb.connect(host=authargs["db_host"], user="python", passwd=authargs["db_pass"], db=authargs["db_name"])
+  db = MySQLdb.connect(host=authargs["db_host"], user=authargs["db_user"], passwd=authargs["db_pass"], db=authargs["db_name"])
   db.autocommit(True)
 
-  with closing( db.cursor() ) as cursor:
+  with closing(db.cursor()) as cursor:
     cursor.connection.autocommit(True)
 
     print "Attempting to Creating table '%s' ..." % tb_name
@@ -109,12 +109,12 @@ def data_to_db(sv_file_fn, separator, headers, coltypes, force, tb_name, ignore_
       cursor.execute("FLUSH TABLES;")
     except:
       sys.stderr.write("[WARNING]: Insufficient permission to run command 'FLUSH TABLES'. This is will slow down insert speed.\
-                     Give the 'python' process permission with MySQL to avoid this warning.\n")
+                     Give the '%s' process permission with MySQL to avoid this warning.\n" % authargs["db_user"])
 
     cursor.execute("SHOW VARIABLES LIKE 'datadir';")
     tb_dir = cursor.fetchone()[1]
 
-    # may fail with incorrect level of permissions for python
+    # may fail with incorrect level of permissions for user
     call(["myisamchk", "--keys-used=0", "-rq", "%s/%s" % (os.path.join(tb_dir,authargs["db_name"]), tb_name) ])
 
     insert_stmt = ("""
@@ -134,14 +134,14 @@ def data_to_db(sv_file_fn, separator, headers, coltypes, force, tb_name, ignore_
 
     cursor.execute(insert_stmt)
 
-    # may fail with incorrect level of permissions for python
+    # may fail with incorrect level of permissions for user
     call(["myisamchk","-rq", "%s/%s" % (os.path.join(tb_dir, authargs["db_name"]), tb_name)]) # Python needs permissions for this
 
     try:
       cursor.execute("FLUSH TABLES;")
     except:
       sys.stderr.write("[WARNING]: Insufficient permission to run command 'FLUSH TABLES'. This is will slow down insert speed.\
-                        Give the 'python' process permission with MySQL to avoid this warning.\n")
+                        Give the '%s' process permission with MySQL to avoid this warning.\n" % authargs["db_user"])
 
   print "Success! Time taken to parse and ingest entries: %.3f sec" % (time() - start)
   print "Final table name: '{0}'.".format(tb_name)
@@ -151,20 +151,21 @@ def data_to_db(sv_file_fn, separator, headers, coltypes, force, tb_name, ignore_
 
 
 def main():
-  parser = argparse.ArgumentParser(description="Insert a .*sv file into a MySQL database")
-  parser.add_argument("sv_file_fn", action="store", help="The full file name of the sv file")
+  parser = argparse.ArgumentParser(description="Insert a .*sv file into a MySQL database.")
+  parser.add_argument("sv_file_fn", action="store", help="The full file name of the sv file.")
   parser.add_argument("separator", action="store", help="The kind of separator between columns in the data file. Each line must end with a newline/carriage return\
-                      Surrounded by quotes e.g '\t' for tab. ' ' for space. ',' for 'comma'. The following and more are valid: '@', '#', '~' etc.. '\\n' IS NOT!")
-  parser.add_argument("--db_name", "-d", action="store", default="Pydb", help="The name of the database where table with the graph will be held")
-  parser.add_argument("--tb_name", "-t", action="store", help="The name you want the table to have in the db")
+                      Surrounded by quotes e.g '\\t' for tab. ' ' for space. ',' for 'comma'. The following and more are valid: '@', '#', '~' etc.. '\\n' IS NOT!")
+  parser.add_argument("--db_name", "-d", action="store", default="Pydb", help="The name of the database where table with the graph will be held. Default is 'Pydb'.")
+  parser.add_argument("--db_user", "-u", action="store", default="python", help="The name of the database user who will be reponsible for all transactions. Default is 'python'.")
+  parser.add_argument("--tb_name", "-t", action="store", help="The name you want the table to have in the db.")
   parser.add_argument("--headers", "-e", action="store", default="auto", nargs="+", help="If file does not have headers (column titles/labels) in the first line of the *sv file\
-                      -- use this flag  to specify in e.g -H source destination time attr1 'attr w space' att3. If input file does have headers & you want to use them DO NOT use this flag")
+                      -- use this flag  to specify in e.g -H source destination time attr1 'attr w space' att3. If input file does have headers & you want to use them DO NOT use this flag.")
   parser.add_argument("--db_host", "-H", action="store", default="localhost", help="The database hostname/network address. Default is localhost.")
   parser.add_argument("--coltypes", "-ct", action="store", nargs="+", help="If not used -- types are assigned automatically based on auto detection of type using the 2nd line of data.\
                       MySQL types of the each column enclosed 'in quotes'. As many as there are columns in the data.\
                       see http://dev.mysql.com/doc/refman/5.0/en/data-type-overview.html for acceptable types. E.g 'integer not null'. 'double', 'FLOAT', varchar(64) etc..")
-  parser.add_argument("--force", "-f", action="store_true", help="Force table name to be what you want (DROPS TABLE WITH SAME NAME IF PRESENT) or create new table with suffix")
-  parser.add_argument("--no_pass", "-np", action="store_true", help="Pass the flag if your 'python' user has no password")
+  parser.add_argument("--force", "-f", action="store_true", help="Force table name to be what you want (DROPS TABLE WITH SAME NAME IF PRESENT) or create new table with suffix.")
+  parser.add_argument("--no_pass", "-np", action="store_true", help="Pass the flag if your mysql user has no password.")
   parser.add_argument("--ignore_cols", "-i", action="store", nargs="+", type=int, help="Index of columns to ignore. O-based indexing. E.g -i 0 3 5. This will not insert columns 0,3 and 5 into the DB.")
 
   result = parser.parse_args()
@@ -173,10 +174,9 @@ def main():
     result.db_pass = ""
   else:
     from getpass import getpass
-    #result.db_pass = "python"
-    result.db_pass = getpass("Please enter the 'python' user password for MySQL:") # TODO: UNCOMMENT
+    result.db_pass = getpass("Please enter the '%s' user password for MySQL:" % result.db_user)
 
-  authargs = {"db_host": result.db_host, "db_pass": result.db_pass, "db_name": result.db_name}
+  authargs = {"db_host":result.db_host, "db_pass":result.db_pass, "db_name":result.db_name, "db_user":result.db_user}
 
   data_to_db(result.sv_file_fn, result.separator, result.headers, result.coltypes, result.force, result.tb_name, result.ignore_cols, **authargs)
 if __name__ == "__main__":

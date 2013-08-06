@@ -7,7 +7,11 @@ mysql_igraph
 MySQL Setup for extension
 =========================
 
-Login to mysql as root => mysql -u root -p
+You can TODO...
+
+If you already have a mysql user account that you want to use omit step 1
+
+1. Login to mysql as root => mysql -u root -p
 
 Create a 'python' user within MySQL if one does not already exist. No password is preferable =>
 CREATE USER 'python'@'localhost' IDENTIFIED BY '';
@@ -27,10 +31,10 @@ This is full source simply download the package to any location. If all dependen
 Dependencies
 ============
 
-python 2.7.
-python-mysq.
-igraph +0.6.
-MySQL-client MySQL-server (Not compatible with 5.4. Tested compatible with 5.1-5.3, 5.5).
+- python 2.7.
+- python-mysq.
+- igraph +0.6.
+- MySQL-client MySQL-server (Not compatible with 5.4. Tested compatible with 5.1-5.3, 5.5).
 
 
 Examples of use:

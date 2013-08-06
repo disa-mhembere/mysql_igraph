@@ -10,52 +10,54 @@ from contextlib import closing
 import MySQLdb
 from getpass import getpass
 
-def setup(py_db_name, **authargs):
-  print "Connecting to database %s ..." % authargs["db_name"]
+def setup(new_db_name, new_user, all_access, **authargs):
+
   db = MySQLdb.connect(host=authargs["db_host"], user=authargs["db_user"], passwd=authargs["db_pass"])
   db.autocommit(True)
 
   with closing( db.cursor() ) as cursor:
     cursor.connection.autocommit(True)
 
-    cursor.execute("SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = 'python');")
-    if cursor.fetchone()[0] == 0: # Means there is no python user in MySQL
-      print "'python' user not found. Creating new 'python' user ..."
-      cursor.execute("CREATE USER 'python'@'%s' IDENTIFIED BY '%s';" % (authargs["db_host"], getpass("Please enter a password for the 'python user. Hit enter/return for no password:'")))
+    cursor.execute("SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '%s');" % new_user)
+    if cursor.fetchone()[0] == 0: # Means there is no user in MySQL
+      print "Creating new '%s' user ..." % new_user
+      cursor.execute("CREATE USER '%s'@'%s' IDENTIFIED BY '%s';" % (new_user, authargs["db_host"], getpass("Please enter a password for the '%s' account. Hit enter/return for no password:" % new_user)))
 
-    # Check if db exists
-    if not (cursor.execute("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '%s';" % py_db_name)):
-      cursor.execute("CREATE DATABASE %s;" % py_db_name)
     else:
-      print "Database '%s' already exists. It will not be recreated." % py_db_name
+      print "\n*[Warning]: The user '%s' already exist. No new user added!" % new_user
+    # Check if db exists
+    if not (cursor.execute("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '%s';" % new_db_name)):
+      cursor.execute("CREATE DATABASE %s;" % new_db_name)
+      print "Database %s successfully created ..." % new_db_name
+    else:
+      print "\n*[Warning]: Database '%s' already exists. It will not be recreated!\n" % new_db_name
 
     # Grant privileges
-    cursor.execute("GRANT ALL ON %s.* TO 'python'@'%s';" % (py_db_name, authargs["db_host"]))
+    cursor.execute("GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%s';" % ("*" if all_access else new_db_name, new_user, authargs["db_host"]))
 
-  print "Setup successfully completed. You are now ready to use the mysql_igraph extension"
+  db.close() # close db connection
+  print "Setup successfully completed! You are now ready to use the mysql_igraph extension!\nYou can create new databases using 'ingest.py -i'"
 
 def main():
 
-  parser = argparse.ArgumentParser(description='Setup script to use of mysql_igraph extension. Creates python user if none exists & sets up a database for use.')
+  parser = argparse.ArgumentParser(description="Setup script to use mysql_igraph extension. Creates requested user/password (if no duplicate user exists) & sets up a database for use.")
 
-  parser.add_argument("--db_user", "-u", action="store", defualt="root", help="A user with sufficient permission to create accounts and grant priveleges. Default is 'root'")
-  parser.add_argument("--db_host", "-H", action="store", default="localhost", help="The database hostname/network address. Default is localhost.")
-  parser.add_argument("--no_pass", "-np", action="store_true", help="Pass the flag if your 'python' user has no password")
+  parser.add_argument("--db_user", "-u", action="store", default="root", help="A user with sufficient permission to create accounts and grant priveleges. Default is 'root'.")
+  parser.add_argument("--db_host", "-H", action="store", default="localhost", help="The database hostname/network address. Default is 'localhost'.")
+  parser.add_argument("--all_access", "-a", action="store_true", help="Pass the flag if you want to allow the new user access to all tables in the database. This permits user to add/delete all databases.")
 
-  parser.add_argument("--py_db_name", "-d", action="store", default="Pydb", help="The database name that you want to create to hold mysql igraph graphs.")
+  parser.add_argument("--new_user", "-n", action="store", default="python", help="The new user you want to create username. Default is 'python'.")
+  parser.add_argument("--new_db_name", "-d", action="store", default="Pydb", help="The new database name that you want to create to hold mysql igraph graphs. Default is 'Pydb'.")
 
   result = parser.parse_args()
 
-  if result.no_pass:
-    result.db_pass = ""
-  else:
-    result.db_pass = getpass("Please enter the '%s' user password for MySQL:" % result.db_user)
+  result.db_pass = getpass("Please enter the '%s' user password for MySQL:" % result.db_user)
 
-  print "Attempting connection as user: %'s'@'%s'" % (result.db_user, result.db_host)
-  print "Attempting to create database: %s" % (result.db_name)
+  print "Attempting connection as user: '%s'@'%s'" % (result.db_user, result.db_host)
+  print "Attempting to create database: %s" % (result.new_db_name)
 
   authargs = {"db_user":result.db_user, "db_host": result.db_host, "db_pass": result.db_pass}
-  setup(result.py_db_name, **authargs)
+  setup(result.new_db_name, result.new_user, result.all_access, **authargs)
 
 if __name__ == '__main__':
   main()
