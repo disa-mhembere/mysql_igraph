@@ -233,60 +233,14 @@ def build_igraph_from_db(dim, query_stmt, out_format, authargs, save_fn=None):
   print "Total time for graph %.3f" % (time()-begin)
   return graph, save_fn
 
-def interactive_driver(**authargs):
-  """
-  Driver for interactive info mode
-  """
-  import info_queries
-
-  cmd = 0
-
-  db = MySQLdb.connect(host=authargs["db_host"], user=authargs["db_user"], passwd=authargs["db_pass"], db=authargs["db_name"])
-  db.autocommit(True)
-
-  qry_dict = {1:info_queries.get_db_names, 2:info_queries.enter_db, 3:info_queries.get_table_names,
-              4:info_queries.get_table_description, 5:info_queries.get_sample_rows, 6:info_queries.get_datadir,
-              7:info_queries.create_db}
-
-  with closing(db.cursor()) as cursor:
-    cursor.connection.autocommit(True)
-
-    while not (cmd == 8):
-      print "\nWhat would you like to do?:\n"
-      print "{0:50}".format("1. Show database names.") + "2. Enter database."
-      print "{0:50}".format("3. Show table names.") + "4. Get table description (column names/types)."
-      print "{0:50}".format("5. Get 2 sample rows from table.") + "6. Show data directory (Locate output)"
-      print "{0:50}".format("7. Create new database") + "8. Quit application/Exit\n"
-
-      try:
-        cmd = sys.stdin.readline().strip()
-        cmd = int(cmd)
-      except:
-        pass # Silent fail
-
-      if not isinstance(cmd, int):
-        sys.stderr.write("Invalid non-numerical command '{0}' ! Try again. \n".format(cmd))
-      elif (cmd == 8):
-        print "Exiting application ..."
-        sys.exit(1)
-      elif (cmd not in qry_dict.keys()):
-        sys.stderr.write("Invalid command '{0}' ! Try again.\n".format(cmd))
-
-      else:
-        cursor.execute(qry_dict[cmd](db_name=authargs["db_name"]))
-        print "\n======================================================\nQuery result:"
-        for row in cursor.fetchall():
-          print row
-        print "======================================================"
-
 def main():
   parser = argparse.ArgumentParser(description="Create create time series graph(s) from a table in the database.")
   parser.add_argument("--tb_name", "-t", action="store", help="The table name containing the graph.")
-  parser.add_argument("--db_name", "-d", default="Pydb", action="store", help="The database name containing the graph.")
+  parser.add_argument("--db_name", "-d", default="Pydb", action="store", help="The database name containing the graph. Default is 'Pydb'.")
   parser.add_argument("--db_host", "-H", action="store", default="localhost", help="The database hostname/network address. Default is localhost.")
-  parser.add_argument("--db_user", "-u", action="store", default="python", help="The name of the database user who will be reponsible for all transactions. Defauly is 'python'")
+  parser.add_argument("--db_user", "-u", action="store", default="python", help="The name of the database user who will be reponsible for all transactions. Default is 'python'.")
 
-  parser.add_argument("--save_dir", "-S", action="store", default="./graph_slices", help="Directory where you want the graph to save.")
+  parser.add_argument("--save_dir", "-S", action="store", default="./graph_slices", help="Directory where you want the graph to save. Default is './graph_slices'.")
   parser.add_argument("--num_slices", "-n", action="store", type=int, default=1, help="The number of slices you want. Defualt is 1.")
   parser.add_argument("--continuous", "-c", action="store_true", help="If you want each slice to begin from the 'beginning of time'. \
                         If you don't select this all slices will not overlap in time.")
@@ -295,7 +249,7 @@ def main():
   parser.add_argument("--time_col","-tc", action="store", help="Column/Attribute name of the column containing the time attribute on which slicing will occur.")
   parser.add_argument("--src_col", "-sc", action="store", help="Column/Attribute name containing source vertices.")
   parser.add_argument("--dest_col", "-dc", action="store", help="Column/Attribute name containing destination vertices.")
-  parser.add_argument("--weight_col", "-w", action="store", default="", help="Column/Attribute name containing edge weights.")
+  parser.add_argument("--weight_col", "-w", action="store", default="", help="Column/Attribute name containing edge weights. Default is ''.")
   parser.add_argument("--aggregation", "-a", action="store", default="sum", help="The type of operation to be performed to numerical columns in the slice. \
                         Default is sum. Options: 'sum', 'prod', 'avg', 'stddev', 'count', 'count(distinct)', 'max', 'min', 'variance'.")
 
@@ -317,31 +271,20 @@ def main():
                           """)
   parser.add_argument("--no_pass", "-np", action="store_true", help="Pass the flag if your user account has no password.")
 
-  parser.add_argument("--interactive", "-i", action="store_true", help="Interactive mode. Highly recommended!")
-
   result = parser.parse_args()
 
-  if result.interactive:
-    if not result.db_name:
-      sys.stderr.write("You must define a database with '-d' flag.")
-      sys.exit(-1)
+  if not (result.tb_name and result.time_col and result.db_name and result.save_dir and result.src_col and result.dest_col and result.out_format):
+    sys.stderr.write("You must at least define the following flags to run a cmd line job: '-T', '-t', '-d', '-S', '-sc', '-dc', '-o'\n")
 
-    result.db_pass = getpass("Please enter the '%s' user password for MySQL:" % result.db_user)
-    interactive_driver(db_pass=result.db_pass, db_host=result.db_host, db_name=result.db_name, db_user=result.db_user)
+  if result.no_pass:
+    result.db_pass = ""
 
   else:
-    if not (result.tb_name and result.time_col and result.db_name and result.save_dir and result.src_col and result.dest_col and result.out_format):
-      sys.stderr.write("You must at least define the following flags to run a cmd line job: '-T', '-t', '-d', '-S', '-sc', '-dc', '-o'\n")
+    result.db_pass = getpass("Please enter the '%s' user password for MySQL:" % result.db_user)
 
-    if result.no_pass:
-      result.db_pass = ""
+  authargs = {"db_host": result.db_host, "db_pass": result.db_pass, "db_name": result.db_name, "db_user":result.db_user}
 
-    else:
-      result.db_pass = getpass("Please enter the '%s' user password for MySQL:" % result.db_user)
-
-    authargs = {"db_host": result.db_host, "db_pass": result.db_pass, "db_name": result.db_name, "db_user":result.db_user}
-
-    create_graph(result.tb_name, result.time_col, result.save_dir, result.src_col, result.dest_col, result.weight_col, result.out_format, result.num_slices, result.aggregation, **authargs)
+  create_graph(result.tb_name, result.time_col, result.save_dir, result.src_col, result.dest_col, result.weight_col, result.out_format, result.num_slices, result.aggregation, **authargs)
 
 if __name__ == "__main__":
   main()
