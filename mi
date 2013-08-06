@@ -19,55 +19,65 @@ def interactive_driver(**authargs):
   cmd = 0
 
   # TODO: Dynamic connection here!
-  db = MySQLdb.connect(host=authargs["db_host"], user=authargs["db_user"], passwd=authargs["db_pass"], db=authargs["db_name"])
+  #import pdb; pdb.set_trace()
+  #if authargs["db"]:
+  db = MySQLdb.connect(**authargs)
+  #else:
+  #  db = MySQLdb.connect(host=authargs["host"], user=authargs["user"], passwd=authargs["passwd"])
+
   db.autocommit(True)
 
   qry_dict = {1:info_queries.get_db_names, 2:info_queries.enter_db, 3:info_queries.get_table_names,
               4:info_queries.get_table_description, 5:info_queries.get_sample_rows, 6:info_queries.get_datadir,
-              7:info_queries.create_db}
+              7:info_queries.create_db, 8:info_queries.grant_db_access, 9:info_queries.delete_db, 0:info_queries.delete_table}
 
   with closing(db.cursor()) as cursor:
     cursor.connection.autocommit(True)
 
-    while not (cmd == 8):
+    while True:
       print "\nWhat would you like to do?:\n"
       print "{0:50}".format("1. Show database names.") + "2. Enter database."
       print "{0:50}".format("3. Show table names.") + "4. Get table description (column names/types)."
-      print "{0:50}".format("5. Get 2 sample rows from table.") + "6. Show data directory (Locate output)"
-      print "{0:50}".format("7. Create new database") + "8. Quit application/Exit\n"
+      print "{0:50}".format("5. Get sample rows from table.") + "6. Show mysql data directory (Locate output.)"
+      print "{0:50}".format("7. Create new database.") +  "8. Grant permission to database to user."
+      print "{0:50}".format("9. Delete database.") +  "0. Delete table."
+      print "{0:50}".format("Q. Quit application/Exit\n")
 
       try:
         cmd = sys.stdin.readline().strip()
         cmd = int(cmd)
       except:
-        pass # Silent fail
+        if (cmd == "q" or cmd == "Q"):
+          print "Exiting application ..."
+          sys.exit(1)
 
       if not isinstance(cmd, int):
         sys.stderr.write("Invalid non-numerical command '{0}' ! Try again. \n".format(cmd))
-      elif (cmd == 8):
-        print "Exiting application ..."
-        sys.exit(1)
       elif (cmd not in qry_dict.keys()):
         sys.stderr.write("Invalid command '{0}' ! Try again.\n".format(cmd))
 
       else:
-        cursor.execute(qry_dict[cmd](db_name=authargs["db_name"]))
-        print "\n======================================================\nQuery result:"
-        for row in cursor.fetchall():
-          print row
-        print "======================================================"
+        try:
+          cursor.execute(qry_dict[cmd](**authargs))
+          print "\n======================================================\nQuery result:\n-------------"
+          for row in cursor.fetchall():
+            print row
+          print "======================================================"
+        except Exception, msg:
+          print "\n======================================================\nQuery result:\n-------------"
+          print "ERROR:", msg
+          print "======================================================"
 
 def main():
   parser = argparse.ArgumentParser(description="Iteractive MySQL database/table explorer.")
-  parser.add_argument("db_user", action="store", help="The name of the database user who will be reponsible for all transactions")
-  parser.add_argument("--db_host", "-H", action="store", default="localhost", help="The database hostname/network address. Default is localhost.")
-  parser.add_argument("--tb_name", "-t", action="store", help="The table name containing the graph.")
-  parser.add_argument("--db_name", "-d", action="store", help="The database name containing the graph.")
+  parser.add_argument("user", action="store", help="The name of the database user who will be reponsible for all transactions")
+  parser.add_argument("--host", "-H", action="store", default="localhost", help="The database hostname/network address. Default is localhost.")
+  parser.add_argument("--db", "-d", action="store", default="", help="The database name containing the graph.")
 
   result = parser.parse_args()
 
-  result.db_pass = getpass("Please enter the '%s' user password for MySQL:" % result.db_user)
-  interactive_driver(db_pass=result.db_pass, db_host=result.db_host, db_name=result.db_name, db_user=result.db_user)
+  result.passwd = getpass("Please enter the '%s' user password for MySQL:" % result.user)
+  interactive_driver(passwd=result.passwd, host=result.host, db=result.db, user=result.user)
 
 if __name__ == '__main__':
   main()

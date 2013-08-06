@@ -11,7 +11,7 @@ import sys
 from utils.gen_util import sql_escape_string
 from getpass import getpass
 
-# All authargs are db auth info i.e db_name, db_host, db_pass, db_user
+# All authargs are db auth info i.e db, host, passwd, user
 
 def get_db_names(**authargs):
   """
@@ -27,13 +27,13 @@ def create_db(**authargs):
   print "Would you like to change users Y/N ?"
   if sys.stdin.readline().lower().strip() == 'y':
     print "Enter the user account you would like to use:"
-    authargs["db_user"] = sys.stdin.readline().lower.strip()
-    authargs["db_pass"] = getpass("Enter password for '%s':" % authargs["db_user"])
+    authargs["user"] = sys.stdin.readline().strip()
+    authargs["passwd"] = getpass("Enter password for '%s':" % authargs["user"])
 
   print "Enter the name of the database you would like to create:"
-  new_db_name = sys.stdin.readline()
+  new_db_name = sys.stdin.readline().strip()
 
-  db = MySQLdb.connect(host=authargs["db_host"], user=authargs["db_user"], passwd=authargs["db_pass"], db=authargs["db_name"])
+  db = MySQLdb.connect(host=authargs["host"], user=authargs["user"], passwd=authargs["passwd"], db=authargs["db"])
   db.autocommit(True)
 
   with closing(db.cursor()) as cursor:
@@ -44,21 +44,22 @@ def create_db(**authargs):
       sys.stderr.write("ERROR: Database operation failure!")
       return "SELECT ERROR: %s" % msg[1]
 
-  return "SELECT 'New table \'%s\' successfully created!';" % new_db_name
+  return "SELECT 'New table \"%s\" successfully created!';" % new_db_name
 
 def enter_db(**authargs):
   """
   Enter a database to inspect further
   """
   print "Enter the name of the database you want to enter:"
-  return "USE %s;" % (sql_escape_string(sys.stdin.readline()))
+  entering_db = sql_escape_string(sys.stdin.readline().strip())
+  return "USE %s;" % (entering_db)
 
 def get_table_description(**authargs):
   """
   Show column/fields & their types from a specific table
   """
   print "Enter table name:"
-  tb_name = sql_escape_string(sys.stdin.readline())
+  tb_name = sql_escape_string(sys.stdin.readline().strip())
 
   return "SHOW COLUMNS FROM %s" % tb_name
 
@@ -79,10 +80,10 @@ def get_sample_rows(**authargs):
   Get a couple of sample rows to see what your data looks lis
   """
   print "Enter table name:"
-  tb_name = sql_escape_string(sys.stdin.readline())
-  return "SELECT * FROM %s.%s LIMIT 2;" % (authargs["db_name"], tb_name)
+  tb_name = sql_escape_string(sys.stdin.readline().strip())
+  return "SELECT * FROM %s.%s LIMIT 2;" % (authargs["db"], tb_name)
 
-def grant_user_access(access_item, **authargs):
+def grant_db_access(**authargs):
   """
   Give a user privileges to perform some actions
 
@@ -90,8 +91,30 @@ def grant_user_access(access_item, **authargs):
   ===============
   access_item : the item the user will now have permission to access
   """
-  # TODO
-  pass
+  print "Enter the name of the DB you want to give access to. If all DBs enter *:"
+  access_db = sys.stdin.readline().strip()
+  if not access_db == "*":
+    access_db = sql_escape_string(access_db)
+
+  print "Enter the name of the user whom you want to grant permission to:"
+  return "GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%s';" % (access_db, sys.stdin.readline().strip(), authargs["host"])
+
+
+def delete_table(**authargs):
+  """
+  Drop a table if you have sufficient permission
+  """
+  print "Enter the name of the table you want to delete:"
+  del_tb_name = sql_escape_string(sys.stdin.readline().strip())
+  return "DROP TABLE %s;" % del_tb_name
+
+def delete_db(**authargs):
+  """
+  Drop a table if you have sufficient permission
+  """
+  print "Enter the name of the table you want to delete:"
+  del_db_name = sql_escape_string(sys.stdin.readline().strip())
+  return "DROP DATABASE %s;" % del_db_name
 
 def main():
   print "No main implemented for", __file__
