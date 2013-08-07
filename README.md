@@ -1,7 +1,7 @@
 mysql_igraph
 ============
 
-'igraph' extension that uses MySQL to store and create time series graphs on the fly
+An [igraph](http://igraph.sourceforge.net/) extension that uses [MySQL](http://dev.mysql.com) to store and create time series graphs on the fly
 
 Dependencies
 ============
@@ -16,7 +16,7 @@ MySQL Setup for extension
 
 If you already have a [MySQL](http://dev.mysql.com) user account and database that you are willing to add tables to you may chose to skip this section.
 
-If not then running the MySQL setup script will do so for you. An example of use is:
+If not then running the [MySQL](http://dev.mysql.com) setup script will do so for you. An example of use is:
 
 <pre> python mysql_setup.py </pre>
 This will use the default setting and perform to following actions:
@@ -86,7 +86,7 @@ Supported formats
 
 Input:
 ------
-The extension is currently implemented to ingest only *'\*' separated value formats e.g csv (comma), tsv (tab), ssv (space) etc*
+The extension is currently implemented to ingest only **'*' separated value formats e.g csv (comma), tsv (tab), ssv (space) etc**
 
 Output:
 ------
@@ -117,13 +117,13 @@ Benchmark performed on an 1-core of 2.4 Ghz, 32GB RAM server.
 1. "FLUSH tables"
 2. "myisamchk"
 
-Time formats accepted are the sql types datetime, date, time, year, timestamp as documented by mysql http://dev.mysql.com/doc/refman/5.5/en/date-and-time-types.html.
+Time formats accepted are the sql types datetime, date, time, year, timestamp as [documented by MySQL](http://dev.mysql.com/doc/refman/5.5/en/date-and-time-types.html).
 
 Sample Data:
 ===========
-A few very short sample data files are included in the <pre>sampledata</pre> folder.
+A few very short sample data files are included in the [sampledata](sampledata) folder.
 
 Need help?
 ==========
-The *action* scripts (**currently ingest.py, slice.py**) can be passed -h flag for help. Help there is detailed and exhaustive.
+The *action* scripts (i.e any script callable from the command line) can be passed **-h** flag for help. Help there is detailed and exhaustive.
 Other questions can be emailed to disa@jhu.edu.
