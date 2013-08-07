@@ -3,6 +3,13 @@ mysql_igraph
 
 'igraph' extension that uses MySQL to store and create time series graphs on the fly
 
+Dependencies
+============
+
+- python 2.7.
+- python-mysq.
+- igraph +0.6.
+- MySQL-client MySQL-server (Not compatible with 5.4. Tested compatible with 5.1-5.3, 5.5).
 
 MySQL Setup for extension
 =========================
@@ -16,7 +23,7 @@ This will use the default setting and perform to following actions:
 
 1. Create a <pre>"python"@"localhost"</pre> user with no password, (if one does not already exist)
 2. Create a database named <pre>Pydb</pre> (if one does not already exist)
-3. Grant access to the <pre>python<pre> user to add/delete from the "Pydb" database
+3. Grant access to the <pre>python</pre> user to add/delete from the "Pydb" database
 
 Optional flags may be passed to change the defaults. These may be discovered by typing:
 <pre>python mysql_setup.py -h</pre>
@@ -27,49 +34,41 @@ Installation
 
 This is full source simply download the package to any location. If all dependencies are present all should go well!
 
-Dependencies
-============
-
-- python 2.7.
-- python-mysq.
-- igraph +0.6.
-- MySQL-client MySQL-server (Not compatible with 5.4. Tested compatible with 5.1-5.3, 5.5).
-
 
 Examples of use:
 ================
 
 Ingest example:
 ---------------
-Suppose we have an input data file named data.tsv. The following:
+Suppose we have an input data file named **data.tsv**. The following:
 
-python ingest.py data.tsv "\t" -i 0
-, would insert the data.tsv file into the database. The second argument is the type of separator used in the file -- here we specified "\t" (tab). The last argument ("-i") is optional and sets which (if any) column indexes of the input file to ignore and not insert into the DB.
+<pre>python ingest.py data.tsv "\t" -i 0</pre>
+, would insert the **data.tsv** file into the database. The second argument is the type of separator used in the file -- here we specified *"\t"* (tab). The last argument *("-i")* is optional and sets which (if any) column indexes of the input file to ignore and not insert into the DB.
 
 Notice that all tsv input headers are turned into attribute names and types are deduced automatically based on the 1st row of data. This is default behavior that is alterable via other flags which can be displayed by using the help flag as follows:
 
-python ingest.py -h
+<pre>python ingest.py -h</pre>
 
 
 Slicing (partition for time series graphs) example:
 --------------------------------------------------
 Here is how one might call the script:
 
-python slice.py -T table_name -t time_attr_name -d Pydb -S save_result_path -n no_of_graphs -sc source_attr_name -dc dest_attr_name -w weight_attr_name -o output_format
-This will produce 'no_of_graphs' graphs in your selected output format as described above. All flags are described in detail if you run:
+<pre>python slice.py -T table_name -t time_attr_name -d Pydb -S save_result_path -n no_of_graphs -sc source_attr_name -dc dest_attr_name -w weight_attr_name -o output_format</pre>
+This will produce **'no_of_graphs'** graphs in your selected output format as described above. All flags are described in detail if you run:
 
-python slice.py -h
+<pre>python slice.py -h</pre>
 In this example:
 
-table_name – is the name of table which you intend to use to generate the time series graphs e.g myTable
-time_attr_name – is the name of column that contains the time attribute on which the graph will be partitioned e.g timecol1
-save_result_path – the path to where you want the graphs written on disk e.g /home/myname/Documents/data
-no_of_graphs – the integer number of time series graphs you desire. e.g 1
-source_attr_name -- the name of the field that contains the source node IDs. e.g srccol1
-dest_attr_name --  the name of the field that contains the destination node IDs. e.g destcol1
-weight_attr_name -- the name of the field that contains the weight attribute. e.g wightcol1.
+*table_name* – is the name of table which you intend to use to generate the time series graphs e.g myTable
+*time_attr_name* – is the name of column that contains the time attribute on which the graph will be partitioned e.g timecol1
+*save_result_path* – the path to where you want the graphs written on disk e.g /home/myname/Documents/data
+*no_of_graphs* – the integer number of time series graphs you desire. e.g 1
+*source_attr_name* -- the name of the field that contains the source node IDs. e.g srccol1
+*dest_attr_name* --  the name of the field that contains the destination node IDs. e.g destcol1
+*weight_attr_name* -- the name of the field that contains the weight attribute. e.g wightcol1.
 Note that many different kinds of aggregation can be performed to the weight attribute prior to graph creation by passing the -a flag.
-output_format -- your choice of graph format. Supported types noted above. E.g dot
+*output_format* -- your choice of graph format. Supported types noted above. E.g dot
 
 
 Interactive data exploration mode:
