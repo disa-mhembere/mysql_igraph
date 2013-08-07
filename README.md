@@ -7,21 +7,20 @@ mysql_igraph
 MySQL Setup for extension
 =========================
 
-You can TODO...
+If you already have a [MySQL](http://dev.mysql.com) user account and database that you are willing to add tables to you may chose to skip this section.
 
-If you already have a mysql user account that you want to use omit step 1
+If not then running the MySQL setup script will do so for you. An example of use is:
 
-1. Login to mysql as root => mysql -u root -p
+<pre> python mysql_setup.py </pre>
+This will use the default setting and perform to following actions:
 
-Create a 'python' user within MySQL if one does not already exist. No password is preferable =>
-CREATE USER 'python'@'localhost' IDENTIFIED BY '';
+1. Create a <pre>"python"@"localhost"</pre> user with no password, (if one does not already exist)
+2. Create a database named <pre>Pydb</pre> (if one does not already exist)
+3. Grant access to the <pre>python<pre> user to add/delete from the "Pydb" database
 
-Create database you would like to use store your data => CREATE DATABASE Pydb;
-
-Grant access to your database (and any others you like) to 'python' user =>
-GRANT ALL ON Pydb.* TO 'python'@'localhost';
-
-That's it!
+Optional flags may be passed to change the defaults. These may be discovered by typing:
+<pre>python mysql_setup.py -h</pre>
+The flags allow you specify a different new-user, host, database name, root-like user with privileges to create new users, and accessibility to new user.
 
 Installation
 ============

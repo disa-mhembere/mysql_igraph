@@ -273,8 +273,8 @@ def main():
 
   result = parser.parse_args()
 
-  if not (result.tb_name and result.time_col and result.db_name and result.save_dir and result.src_col and result.dest_col and result.out_format):
-    sys.stderr.write("You must at least define the following flags to run a cmd line job: '-T', '-t', '-d', '-S', '-sc', '-dc', '-o'\n")
+  if not (result.tb_name and result.time_col and result.src_col and result.dest_col and result.out_format):
+    sys.stderr.write("ERROR: You must at least define the following flags to run a cmd line job: '-t', '-tc', '-sc', '-dc', '-o'\n")
 
   if result.no_pass:
     result.db_pass = ""
