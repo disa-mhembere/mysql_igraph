@@ -60,15 +60,15 @@ This will produce **'no_of_graphs'** graphs in your selected output format as de
 <pre>python slice.py -h</pre>
 In this example:
 
-*table_name* – is the name of table which you intend to use to generate the time series graphs e.g myTable
-*time_attr_name* – is the name of column that contains the time attribute on which the graph will be partitioned e.g timecol1
-*save_result_path* – the path to where you want the graphs written on disk e.g /home/myname/Documents/data
-*no_of_graphs* – the integer number of time series graphs you desire. e.g 1
-*source_attr_name* -- the name of the field that contains the source node IDs. e.g srccol1
-*dest_attr_name* --  the name of the field that contains the destination node IDs. e.g destcol1
-*weight_attr_name* -- the name of the field that contains the weight attribute. e.g wightcol1.
-Note that many different kinds of aggregation can be performed to the weight attribute prior to graph creation by passing the -a flag.
-*output_format* -- your choice of graph format. Supported types noted above. E.g dot
+- *table_name* – is the name of table which you intend to use to generate the time series graphs e.g myTable
+- *time_attr_name* – is the name of column that contains the time attribute on which the graph will be partitioned e.g timecol1
+- *save_result_path* – the path to where you want the graphs written on disk e.g /home/myname/Documents/data
+- *no_of_graphs* – the integer number of time series graphs you desire. e.g 1
+- *source_attr_name* -- the name of the field that contains the source node IDs. e.g srccol1
+- *dest_attr_name* --  the name of the field that contains the destination node IDs. e.g destcol1
+- *weight_attr_name* -- the name of the field that contains the weight attribute. e.g wightcol1.
+  - Note that many different kinds of aggregation can be performed to the weight attribute prior to graph creation by passing the -a flag.
+- *output_format* -- your choice of graph format. Supported types noted above. E.g dot
 
 
 Interactive data exploration mode:
