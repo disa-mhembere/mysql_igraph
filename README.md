@@ -7,7 +7,7 @@ Dependencies
 ============
 
 - python 2.7.
-- python-mysq.
+- python-mysql.
 - igraph +0.6.
 - MySQL-client MySQL-server (Not compatible with 5.4. Tested compatible with 5.1-5.3, 5.5).
 
