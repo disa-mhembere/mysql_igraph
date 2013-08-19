@@ -36,7 +36,7 @@ def setup(new_db_name, new_user, all_access, **authargs):
     cursor.execute("GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%s';" % ("*" if all_access else new_db_name, new_user, authargs["db_host"]))
 
   db.close() # close db connection
-  print "Setup successfully completed! You are now ready to use the mysql_igraph extension!\nYou can create new databases using 'ingest.py -i'"
+  print "Setup successfully completed! You are now ready to use the mysql_igraph extension!\nYou can create new databases using './mi'"
 
 def main():
 
