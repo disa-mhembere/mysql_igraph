@@ -20,10 +20,10 @@ from getpass import getpass
 def create_graph(tb_name, time_col, save_dir, src_col, dest_col, weight_col,\
                     out_format, num_slices, aggregation, **authargs):
 
-  print "Selected output format: %s ..." % out_format
+  #print "Selected output format: %s ..." % out_format
 
   # connect
-  print "Connecting to database %s ..." % authargs["db_name"]
+  #print "Connecting to database %s ..." % authargs["db_name"]
   db = MySQLdb.connect(host=authargs["db_host"], user=authargs["db_user"], passwd=authargs["db_pass"], db=authargs["db_name"])
   db.autocommit(True)
   process_list = [] # will hold all concurrent processes
@@ -64,7 +64,7 @@ def create_graph(tb_name, time_col, save_dir, src_col, dest_col, weight_col,\
       interval_tuples.append((str((dt.datetime.min + initial_time).time()), str((dt.datetime.min + final_time).time())))
     else:
       interval_tuples.append((str(initial_time), str(final_time)))
-    #print "Interval %d ==> Begin:" % slce, str(interval_tuples[-1][0]), " End:", str(interval_tuples[-1][1]) # test echo
+    ##print "Interval %d ==> Begin:" % slce, str(interval_tuples[-1][0]), " End:", str(interval_tuples[-1][1]) # test echo
     initial_time = final_time # The end of the 1st time interval is the beginning of the next
 
   for idx, tuple_pair in enumerate(interval_tuples):
@@ -89,7 +89,7 @@ def create_graph(tb_name, time_col, save_dir, src_col, dest_col, weight_col,\
         query_stmt = "SELECT %s, %s, FROM %s WHERE %s BETWEEN '%s' AND '%s' GROUP BY %s, %s"\
                       % (src_col, dest_col, tb_name, time_col, str(tuple_pair[0]), str(tuple_pair[1]), src_col, dest_col)
 
-      print "Querying for edges slice %d took %.f sec ..." % (idx, (time()-start))
+      #print "Querying for edges slice %d took %.f sec ..." % (idx, (time()-start))
 
       # TODO: Write with MySQL to where I want
       # TODO: Only spawn as many threads as available on system : os.sysconf("SC_NPROCESSORS_ONLN")
@@ -97,7 +97,7 @@ def create_graph(tb_name, time_col, save_dir, src_col, dest_col, weight_col,\
       # Determine output format and deliver
       if (out_format in ["csv", "edgelist", "tsv"]):
         start = time()
-        print "\nCreating graph for slice %d" % (idx)
+        #print "\nCreating graph for slice %d" % (idx)
         fn = os.path.abspath(os.path.join(save_dir, tb_name+"_slice%d.%s"%(idx, out_format)))
 
         if num_slices == 1: # serial case
@@ -109,14 +109,14 @@ def create_graph(tb_name, time_col, save_dir, src_col, dest_col, weight_col,\
           thr = threading.Thread(target=db_write_file, args=(tb_name+"_slice%d.%s"%(idx, out_format), query_stmt, out_format, authargs))
           thr.start()
           process_list.append(thr)
-          print "Writing edge slice %d took %.3f sec ..." % (idx, (time()-start))
+          #print "Writing edge slice %d took %.3f sec ..." % (idx, (time()-start))
 
       elif  (out_format in ["dot", "gml", "graphml", "gw", "lgl", "ncol", "net", "pickle", "picklez", "svg", "leda", "lgr","graphviz", "graphmlz", "pajek"]):
         if num_slices == 1: # serial case
-          print "\nPrint launching single graph build..."
+          #print "\nPrint launching single graph build..."
           build_igraph_from_db(dim, query_stmt, out_format, authargs, os.path.join(save_dir, tb_name+".%s"%out_format))
         else: # parallel case
-          print "\nPrint launching new graph building process %d ..." % idx
+          #print "\nPrint launching new graph building process %d ..." % idx
 
           thr = threading.Thread(target=build_igraph_from_db, args=(dim, query_stmt, out_format, authargs, os.path.join(save_dir, tb_name+"%d.%s"%(idx,out_format)),))
           thr.start()
@@ -163,7 +163,7 @@ def db_write_file(out_fn, tb_name, out_format, authargs):
     cursor.connection.autocommit(True)
 
     cursor.execute(query)
-    print "Time to write graph to disk: %.3f" % (time()-start)
+    #print "Time to write graph to disk: %.3f" % (time()-start)
     return cursor
 
 def build_igraph_from_db(dim, query_stmt, out_format, authargs, save_fn=None):
@@ -188,15 +188,15 @@ def build_igraph_from_db(dim, query_stmt, out_format, authargs, save_fn=None):
   with closing(db.cursor() ) as cursor:
     cursor.connection.autocommit(True)
     start = time()
-    print "Getting rows for graph slice ...."
+    #print "Getting rows for graph slice ...."
     cursor.execute(query_stmt)
-    print "Time to query db for slice: %.8f" % (time()-start)
+    #print "Time to query db for slice: %.8f" % (time()-start)
 
     start = time()
     rows = cursor.fetchall() # get all rows in the current slice
-    print "Time fetch all rows for slice: %.8f" % (time()-start)
+    #print "Time fetch all rows for slice: %.8f" % (time()-start)
 
-  print "Graph build begin for '%s' with dim = %d and rows = %d ..." % (save_fn, dim, len(rows))
+  #print "Graph build begin for '%s' with dim = %d and rows = %d ..." % (save_fn, dim, len(rows))
 
   graph = igraph.Graph(n=dim, directed=True, edge_attrs={"weight":0})
 
@@ -209,21 +209,21 @@ def build_igraph_from_db(dim, query_stmt, out_format, authargs, save_fn=None):
     edges.append((row[0], row[1]))
     edge_weights.append(row[2])
 
-  print "Time taken to extract edges and weights: %.3f sec" % (time()-start)
+  #print "Time taken to extract edges and weights: %.3f sec" % (time()-start)
 
-  print "Populating igraph ..."
+  #print "Populating igraph ..."
   start = time()
 
   graph.add_edges(edges) # Add all edges at once
-  print "Time to add edges: %.3f sec ..." % (time()-start)
+  #print "Time to add edges: %.3f sec ..." % (time()-start)
 
   start = time()
   graph.es["weight"] = edge_weights # Assign all edges their weights
-  print "Time to add edges weights: %.3f sec ..." % (time()-start)
+  #print "Time to add edges weights: %.3f sec ..." % (time()-start)
 
-  print "Graph (order, size): (%d, %d)" % (graph.vcount(), graph.ecount())
-  #print "Graph is diameter:", graph.diameter()
-  #print "Graph transitivity:", graph.transitivity_undirected()
+  #print "Graph (order, size): (%d, %d)" % (graph.vcount(), graph.ecount())
+  ##print "Graph is diameter:", graph.diameter()
+  ##print "Graph transitivity:", graph.transitivity_undirected()
 
   #if save_fn:
     #if not os.path.exists(os.path.dirname(save_fn)):
