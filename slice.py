@@ -36,11 +36,11 @@ def create_graph(tb_name, time_col, save_dir, src_col, dest_col, weight_col,\
   with closing(db.cursor()) as cursor:
     cursor.connection.autocommit(True)
 
-    cursor.execute("SELECT MAX(%s) FROM %s" % (src_col, tb_name))
-    max_src = cursor.fetchone()[0]
-
-    cursor.execute("SELECT MAX(%s) FROM %s" % (dest_col, tb_name))
-    max_dest = cursor.fetchone()[0]
+    #cursor.execute("SELECT MAX(%s) FROM %s" % (src_col, tb_name))
+    #max_src = cursor.fetchone()[0]
+    #
+    #cursor.execute("SELECT MAX(%s) FROM %s" % (dest_col, tb_name))
+    #max_dest = cursor.fetchone()[0]
 
     cursor.execute("SELECT MIN(%s) FROM %s" % (time_col, tb_name))
     min_time = cursor.fetchone()[0]
@@ -221,7 +221,7 @@ def build_igraph_from_db(dim, query_stmt, out_format, authargs, save_fn=None):
   graph.es["weight"] = edge_weights # Assign all edges their weights
   #print "Time to add edges weights: %.3f sec ..." % (time()-start)
 
-  #print "Graph (order, size): (%d, %d)" % (graph.vcount(), graph.ecount())
+  print "Graph (order, size): (%d, %d)" % (graph.vcount(), graph.ecount())
   ##print "Graph is diameter:", graph.diameter()
   ##print "Graph transitivity:", graph.transitivity_undirected()
 
