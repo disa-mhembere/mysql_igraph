@@ -157,7 +157,7 @@ def main():
                       Surrounded by quotes e.g '\\t' for tab. ' ' for space. ',' for 'comma'. The following and more are valid: '@', '#', '~' etc.. '\\n' IS NOT!")
   parser.add_argument("--db_name", "-d", action="store", default="Pydb", help="The name of the database where table with the graph will be held. Default is 'Pydb'.")
   parser.add_argument("--db_user", "-u", action="store", default="python", help="The name of the database user who will be reponsible for all transactions. Default is 'python'.")
-  parser.add_argument("--tb_name", "-t", action="store", help="The name you want the table to have in the db.")
+  parser.add_argument("--tb_name", "-t", action="store", help="The name you want the table to have in the db. Default if the basename of the file name (without file extension)")
   parser.add_argument("--headers", "-e", action="store", default="auto", nargs="+", help="If file does not have headers (column titles/labels) in the first line of the *sv file\
                       -- use this flag  to specify in e.g -H source destination time attr1 'attr w space' att3. If input file does have headers & you want to use them DO NOT use this flag.")
   parser.add_argument("--db_host", "-H", action="store", default="localhost", help="The database hostname/network address. Default is localhost.")

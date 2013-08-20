@@ -54,13 +54,14 @@ Slicing (partition for time series graphs) example:
 --------------------------------------------------
 Here is how one might call the script:
 
-<pre>python slice.py -T table_name -t time_attr_name -d Pydb -S save_result_path -n no_of_graphs -sc source_attr_name -dc dest_attr_name -w weight_attr_name -o output_format</pre>
+<pre>python slice.py -t table_name -d database_name -S save_result_path -n no_of_graphs -tc time_attr_name -sc source_attr_name -dc dest_attr_name -wc weight_attr_name -o output_format</pre>
 This will produce **'no_of_graphs'** graphs in your selected output format as described above. All flags are described in detail if you run:
 
 <pre>python slice.py -h</pre>
 In this example:
 
 - *table_name* – is the name of table which you intend to use to generate the time series graphs e.g myTable
+- *database_name* - ﻿the name of the database containing the table e.g myDB
 - *time_attr_name* – is the name of column that contains the time attribute on which the graph will be partitioned e.g timecol1
 - *save_result_path* – the path to where you want the graphs written on disk e.g /home/myname/Documents/data
 - *no_of_graphs* – the integer number of time series graphs you desire. e.g 1
