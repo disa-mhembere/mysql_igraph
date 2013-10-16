@@ -126,6 +126,8 @@ def data_to_db(sv_file_fn, separator, headers, coltypes, force, tb_name, ignore_
         ("""
         % (os.path.abspath(sv_file_fn), tb_name, separator, ignore_lines))
 
+    # alter table med_bit add column idx integer not null auto_increment primary key first, add index f_idx (idx, time desc) using btree;
+
     # Add header names to insert statement
     # todo add ignore headers/column which will have @dummy value
     for col in headers:

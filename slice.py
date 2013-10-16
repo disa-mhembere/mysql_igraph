@@ -225,10 +225,10 @@ def build_igraph_from_db(dim, query_stmt, out_format, authargs, save_fn=None):
   #print "Graph is diameter:", graph.diameter()
   #print "Graph transitivity:", graph.transitivity_undirected()
 
-  if save_fn:
-    if not os.path.exists(os.path.dirname(save_fn)):
-      os.makedirs(os.path.dirname(save_fn))
-    graph.save(save_fn, format=out_format)
+  #if save_fn:
+  #  if not os.path.exists(os.path.dirname(save_fn)):
+  #    os.makedirs(os.path.dirname(save_fn))
+  #  graph.save(save_fn, format=out_format)
 
   print "Total time for graph %.3f" % (time()-begin)
   return graph, save_fn
